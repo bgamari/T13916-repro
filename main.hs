@@ -27,14 +27,9 @@ main' dir = do
 
 spawner :: TVar [FilePath] -> FilePath -> Spawner Handle
 spawner filenames dir = Spawner
-    { maker  = do h <- mkhandle filenames dir
-                  putStrLn "maker"
-                  return h
-    , killer = \h -> putStrLn "killer" >> hClose h
-    , isDead = \h -> do putStrLn "isDead"
-                        r <- hIsClosed h
-                        putStrLn "done"
-                        return r
+    { maker  = mkhandle filenames dir
+    , killer = hClose
+    , isDead = hIsClosed
     }
 
 mkhandle :: TVar [FilePath] -> FilePath -> IO Handle
