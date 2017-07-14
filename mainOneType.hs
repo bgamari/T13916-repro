@@ -1,7 +1,7 @@
 module Main where
 
 import BracketOneType
-import Control.Concurrent.STM 
+import Control.Concurrent.STM
 import Control.Concurrent.Async
 import Control.Concurrent
 import System.IO
@@ -17,27 +17,27 @@ main = main' __dir
 main' :: FilePath -> IO ()
 main' dir = do
     filenames <- newTVarIO []
-    withEnvCache limit (spawner filenames dir) $ \cache -> 
+    withEnvCache limit (spawner filenames dir) $ \cache ->
         forConcurrently_ [1..1000 :: Int] $ \n -> withEnv cache (\handle -> put handle n)
     where
         limit :: Limit
         limit = Hard 5
-            
+
         put handle n = hPutStrLn handle (show n) *> threadDelay 10000
-        
+
 spawner :: TVar [FilePath] -> FilePath -> Spawner Handle
-spawner filenames dir = Spawner 
+spawner filenames dir = Spawner
     { maker  = mkhandle filenames dir
     , killer = hClose
     , isDead = hIsClosed
     }
-                          
+
 mkhandle :: TVar [FilePath] -> FilePath -> IO Handle
 mkhandle filenames dir = do
     currentdir <- listDirectory dir
     newfilename <- findnewfilename currentdir (0 :: Int)
     openFile (dir </> newfilename) WriteMode
-    where 
+    where
         findnewfilename currentdir n = do
             let fn = show n
             if fn `elem` currentdir then findnewfilename currentdir (succ n)
