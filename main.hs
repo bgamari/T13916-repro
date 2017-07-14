@@ -10,6 +10,8 @@ import System.IO
 import System.Directory
 import System.FilePath
 
+type Thing = MVar Bool
+
 main :: IO ()
 main = do
     withEnvCache limit spawner $ \cache ->
@@ -20,16 +22,12 @@ main = do
 
         put handle n = return ()
 
-spawner :: Spawner Handle
+spawner :: Spawner Thing
 spawner = Spawner
     { maker  = mkhandle
-    , killer = hClose
-    , isDead = hIsClosed
+    , killer = \thing -> takeMVar thing >> putMVar thing True
+    , isDead = \thing -> readMVar thing
     }
 
-counter = unsafePerformIO $ newIORef 0
-
-mkhandle :: IO Handle
-mkhandle = do
-    c <- atomicModifyIORef' counter $ \c -> (c, c+1)
-    openFile (show c) WriteMode
+mkhandle :: IO Thing
+mkhandle = newMVar False
