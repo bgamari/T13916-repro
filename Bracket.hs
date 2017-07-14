@@ -32,8 +32,7 @@ import qualified Data.Vector as Vector
 -- while a `Hard` limit will not spawn any more than the given number of connections simultaneously.
 --
 -- @since 0.3.7
-data Limit = Lax  {getLimit :: {-# unpack #-} !Int}
-           | Hard {getLimit :: {-# unpack #-} !Int}
+data Limit = Hard {getLimit :: {-# unpack #-} !Int}
 
 data Spawner env = Spawner
     { maker  :: IO env
@@ -54,7 +53,6 @@ data Cache env = Unlimited { spawner :: Spawner env
 withEnvCache :: Limit -> Spawner env -> (Cache env -> IO a) -> IO a
 withEnvCache limit spawner = bracket starter releaseCache
     where starter = case limit of
-            Lax n -> Unlimited spawner <$> initializeEmptyCache n
             Hard n -> Limited spawner <$> initializeEmptyCache n <*> atomically (newTSem n)
 
 -- ** Using a single value
